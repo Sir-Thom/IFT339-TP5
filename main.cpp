@@ -1,7 +1,7 @@
 #include <iostream>
 
 #include <string>
-#include "hashdict_ml.h"
+#include "hashdict.h"
 
 
 
@@ -28,6 +28,7 @@ l'univers de clés 0 à n-1.  Il n'est pas nécessaire de retourner les clés à
 int get_min_alveoles(int n, int m, int k) {
     
     //à implémenter
+    return 0;
     
 }
 
