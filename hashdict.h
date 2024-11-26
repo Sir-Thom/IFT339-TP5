@@ -100,13 +100,16 @@ hashdict<TYPECLE, TYPEVAL>::hashdict() {
 template <typename TYPECLE, typename TYPEVAL>
 hashdict<TYPECLE, TYPEVAL>::~hashdict() {
     for (size_t i = 0; i < cap; ++i) {
-        delete table[i];
-        table[i] = nullptr;
+        if (table[i] && table[i] != bidon) {
+            delete table[i];
+        }
     }
     delete[] table;
-    table = nullptr;
-    delete bidon;
-    bidon = nullptr;
+
+    if (bidon) {
+        delete bidon;
+        bidon = nullptr;
+    }
 }
 
 // à vous d'ajouter le code d'implémentation de vos fonctions de classe
@@ -150,22 +153,22 @@ hashdict<TYPECLE, TYPEVAL> &hashdict<TYPECLE, TYPEVAL>::operator=(const hashdict
 template <typename TYPECLE, typename TYPEVAL>
 void hashdict<TYPECLE, TYPEVAL>::resize() {
     size_t old_cap = cap;
+    alveole **old_table = table;
+
     cap *= 2;
-    auto new_table = new alveole *[cap];
+    table = new alveole *[cap];
     for (size_t i = 0; i < cap; ++i) {
-        new_table[i] = nullptr;
+        table[i] = nullptr;
     }
+
+    nbelem = 0;
     for (size_t i = 0; i < old_cap; ++i) {
-        if (table[i] && table[i] != bidon) {
-            size_t index = std::hash<TYPECLE>()(table[i]->cle) % cap;
-            while (new_table[index] != nullptr) {
-                index = (index + 1) % cap;
-            }
-            new_table[index] = table[i];
+        if (old_table[i] && old_table[i] != bidon) {
+            inserer(old_table[i]->cle, old_table[i]->val);
+            delete old_table[i];
         }
     }
-    delete[] table;
-    table = new_table;
+    delete[] old_table;
 }
 template <typename TYPECLE, typename TYPEVAL>
 bool hashdict<TYPECLE, TYPEVAL>::contient_cle(const TYPECLE &cle) const {
@@ -185,13 +188,13 @@ bool hashdict<TYPECLE, TYPEVAL>::inserer(const TYPECLE &cle, const TYPEVAL &val)
         }
         index = (index + 1) % cap;
     }
-    if (table[index] == nullptr || table[index] == bidon) {
-        table[index] = new alveole(cle, val);
-        nbelem++;
-        return true;
+    if (table[index] != nullptr && table[index] != bidon) {
+        delete table[index];
     }
+    table[index] = new alveole(cle, val);
 
-    return false;
+    nbelem++;
+    return true;
 }
 
 template <typename TYPECLE, typename TYPEVAL>
@@ -199,6 +202,7 @@ bool hashdict<TYPECLE, TYPEVAL>::supprimer(const TYPECLE &cle) {
     size_t index = std::hash<TYPECLE>()(cle);
     while (table[index] != nullptr && table[index] != bidon) {
         if (table[index]->cle == cle) {
+            delete table[index];
             table[index] = bidon;
             nbelem--;
 
@@ -227,12 +231,25 @@ TYPEVAL &hashdict<TYPECLE, TYPEVAL>::operator[](const TYPECLE &cle) {
     while (!index || table[index] == bidon) {
         index = (index + 1) % cap;
     }
-    table[index] = new alveole(cle, TYPEVAL());
-    nbelem++;
+    if (table[index] == nullptr || table[index] == bidon) {
+        table[index] = new alveole(cle, TYPEVAL());
+        ++nbelem;
+    }
     return table[index]->val;
 }
 
 template <typename TYPECLE, typename TYPEVAL>
-void hashdict<TYPECLE, TYPEVAL>::clear() {}
+void hashdict<TYPECLE, TYPEVAL>::clear() {
+    for (size_t i = 0; i < cap; i++) {
+        delete table[i];
+    }
+    delete[] table;
+    nbelem = 0;
+    cap = 16;
+    table = new alveole *[cap];
+    for (size_t i = 0; i < cap; i++) {
+        table[i] = nullptr;
+    }
+}
 
 #endif  // HASHDICT_H
