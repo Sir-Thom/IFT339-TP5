@@ -5,6 +5,7 @@
 
 // inclusions peut-être utiles pour la partie 2
 #include <algorithm>
+#include <cassert>
 #include <set>
 #include <unordered_map>
 
@@ -28,6 +29,74 @@ int get_min_alveoles(int n, int m, int k) {
 /***********************************
 Code pour la partie 1
 ************************************/
+void test_table_vide() {
+    hashdict<int, std::string> dict;
+    assert(!dict.contient_cle(42));
+    assert(!dict.supprimer(42));
+    std::cout << "Test table vide: OK\n";
+}
+
+void test_collisions() {
+    hashdict<int, std::string> dict;
+    int collisions[] = {1, 17, 33}; // Exemple: même hash pour cap = 16
+    for (int key : collisions) {
+        dict.inserer(key, "valeur" + std::to_string(key));
+    }
+
+    for (int key : collisions) {
+        assert(dict.contient_cle(key));
+        assert(dict[key] == "valeur" + std::to_string(key));
+    }
+
+    std::cout << "Test collisions: OK\n";
+}
+void test_redimensionnement() {
+    hashdict<int, int> dict;
+    int n = 1000; // Cap initiale de 16, donc resize attendu
+    for (int i = 0; i < n; i++) {
+        dict.inserer(i, i * 10);
+    }
+
+    bool ok = true;
+    for (int i = 0; i < n; i++) {
+        ok &= dict.contient_cle(i) && dict[i] == i * 10;
+    }
+
+    std::cout << "Test redimensionnement: " << (ok ? "OK" : "ÉCHEC") << "\n";
+}
+void test_suppression_et_reinsertion() {
+    hashdict<int, int> dict;
+    dict.inserer(10, 100);
+    dict.inserer(26, 260); // Collision possible
+    dict.supprimer(10);
+
+    assert(!dict.contient_cle(10));
+    dict.inserer(10, 101);
+
+    assert(dict.contient_cle(10) && dict[10] == 101);
+    assert(dict.contient_cle(26) && dict[26] == 260);
+
+    std::cout << "Test suppression et réinsertion: OK\n";
+}
+void test_acces_via_operator() {
+    hashdict<std::string, int> dict;
+    assert(dict["inexistant"] == 0); // Clé créée avec valeur par défaut
+    dict["inexistant"] = 42;
+    assert(dict["inexistant"] == 42);
+
+    std::cout << "Test opérateur []: OK\n";
+}
+void test_reutilisation_alveoles() {
+    hashdict<int, std::string> dict;
+    dict.inserer(5, "cinq");
+    dict.supprimer(5);
+
+    dict.inserer(5, "five");
+    assert(dict.contient_cle(5) && dict[5] == "five");
+
+    std::cout << "Test réutilisation alvéoles: OK\n";
+}
+
 
 // Une structure qui servira à tester des clés arbitraires.  On a besoin de
 // spécifier == et != pour savoir si deux objets ont la même clé.  La fct de
@@ -177,6 +246,12 @@ int main() {
 
     std::cout << "Après clear:" << std::endl;
     std::cout << "Taille: " << dico.size() << std::endl;
+    test_table_vide();
+    test_collisions();
+    test_redimensionnement();
+    test_suppression_et_reinsertion();
+    test_acces_via_operator();
+    test_reutilisation_alveoles();
 
     /***********************************
                     Tests partie 2
